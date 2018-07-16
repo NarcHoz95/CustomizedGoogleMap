@@ -39,20 +39,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         realm = RealmController.get().getRealm();
 
         //lets start network call
-        String key = getString(R.string.google_maps_key);
-        RetroDataService service = RetrofitClintInstance.getRetrofitInstance().create(RetroDataService.class);
-        Call<RetrofitGetModel> call = service.getPlaces("BBVA+compass+loan+in+US", key);
-        call.enqueue(new Callback<RetrofitGetModel>() {
-            @Override
-            public void onResponse(@NonNull Call<RetrofitGetModel> call, @NonNull Response<RetrofitGetModel> response) {
-                addAllItemToRealm(response.body());
-            }
-            @Override
-            public void onFailure(@NonNull Call<RetrofitGetModel> call, @NonNull Throwable t) {
-                Toast.makeText(MainActivity.this, "Something went wrong...Please try later!",
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
+//        String key = getString(R.string.google_maps_key);
+//        RetroDataService service = RetrofitClintInstance.getRetrofitInstance().create(RetroDataService.class);
+//        Call<RetrofitGetModel> call = service.getPlaces("BBVA+compass+loan+in+US", key);
+//        call.enqueue(new Callback<RetrofitGetModel>() {
+//            @Override
+//            public void onResponse(@NonNull Call<RetrofitGetModel> call, @NonNull Response<RetrofitGetModel> response) {
+//                addAllItemToRealm(response.body());
+//            }
+//            @Override
+//            public void onFailure(@NonNull Call<RetrofitGetModel> call, @NonNull Throwable t) {
+//                Toast.makeText(MainActivity.this, "Something went wrong...Please try later!",
+//                        Toast.LENGTH_SHORT).show();
+//            }
+//        });
 
         GoogleMapsFragment mapsFragment = new GoogleMapsFragment();
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();

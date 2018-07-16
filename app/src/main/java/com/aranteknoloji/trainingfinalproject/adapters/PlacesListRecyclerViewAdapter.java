@@ -37,6 +37,7 @@ public class PlacesListRecyclerViewAdapter extends RealmRecyclerViewAdapter<Plac
 
         Picasso.get().load(model.getIconUrl()).into(viewHolder.icon);
         viewHolder.title.setText(model.getTitle());
+        viewHolder.location.setText(model.getLocation());
     }
 
     @Override
@@ -50,12 +51,13 @@ public class PlacesListRecyclerViewAdapter extends RealmRecyclerViewAdapter<Plac
     public class ListItemViewHolder extends RecyclerView.ViewHolder {
 
         private ImageView icon;
-        private TextView title;
+        private TextView title, location;
 
         public ListItemViewHolder(View itemView) {
             super(itemView);
             icon = itemView.findViewById(R.id.iconView);
             title = itemView.findViewById(R.id.titleView);
+            location = itemView.findViewById(R.id.locationView);
         }
     }
 }

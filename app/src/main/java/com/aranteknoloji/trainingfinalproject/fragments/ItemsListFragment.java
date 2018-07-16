@@ -30,13 +30,19 @@ public class ItemsListFragment extends Fragment {
     private PlacesListRecyclerViewAdapter recyclerViewAdapter;
     private MyViewModel viewModel;
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        viewModel = ViewModelProviders.of(this).get(MyViewModel.class);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_items_list, container, false);
 
         setupRecycler(view);
-        viewModel = ViewModelProviders.of(this).get(MyViewModel.class);
+
         viewModel.getData().observe(this, new MyObservableObject());
 
 

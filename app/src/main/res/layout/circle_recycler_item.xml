@@ -18,6 +18,7 @@
         android:id="@+id/circle_title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
         android:gravity="center"
         app:layout_constraintTop_toTopOf="@id/circle_image"
         app:layout_constraintBottom_toBottomOf="@id/circle_image"

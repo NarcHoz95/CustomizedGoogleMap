@@ -6,9 +6,17 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.aranteknoloji.trainingfinalproject.fragments.GoogleMapsFragment;
@@ -24,12 +32,13 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextView.OnEditorActionListener {
 
-    //FloatingActionMenu's action button's initiliaze
-    private FloatingActionButton main, google, list;
+    private FloatingActionButton google;
+    private FloatingActionButton list;
     private int clickCounter = 0;
     private Realm realm;
+    private EditText search;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -62,6 +71,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ft.commit();
 
         setFloationActionButtonMenu();
+        setToolbar();
+    }
+
+    private void setToolbar() {
+        Toolbar toolbar = findViewById(R.id.mainToolbar);
+        setSupportActionBar(toolbar);
+        search = findViewById(R.id.searchEditText);
+        search.setOnEditorActionListener(this);
+        toolbar.setOnClickListener(this);
     }
 
     private void addAllItemToRealm(RetrofitGetModel body) {
@@ -82,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void setFloationActionButtonMenu() {
-        main = findViewById(R.id.mainActionButton);
+        FloatingActionButton main = findViewById(R.id.mainActionButton);
         google = findViewById(R.id.googleMapAction);
         list = findViewById(R.id.listActionButton);
         main.setOnClickListener(this);
@@ -126,18 +144,69 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (checkBackStack()) break;
                 ItemsListFragment fragment = new ItemsListFragment();
                 FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                ft.replace(R.id.mainFrameLayout, fragment);
+                ft.setCustomAnimations(R.anim.fragment_list_in, android.R.anim.fade_out,
+                        android.R.anim.fade_in, R.anim.fragment_list_out);
+                ft.add(R.id.mainFrameLayout, fragment);
 //                ft.setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
-//                ft.setCustomAnimations(R.anim.fragment_list_in, android.R.anim.fade_out,
-//                        android.R.anim.fade_in, R.anim.fragment_list_out);
                 ft.addToBackStack(null);
                 ft.commit();
                 setActionsGone();
+                break;
+            case R.id.mainToolbar:
+                search.setVisibility(View.VISIBLE);
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
                 break;
         }
     }
 
     private boolean checkBackStack() {
         return getSupportFragmentManager().getBackStackEntryCount() > 0;
+    }
+
+    private void hideSoftKeyboard() {
+        View view = getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (search.isShown()) {
+            search.setVisibility(View.INVISIBLE);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                break;
+            case android.R.id.home:
+                onBackPressed();
+                hideSoftKeyboard();
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+            search.setVisibility(View.INVISIBLE);
+            hideSoftKeyboard();
+            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        }
+        return true;
     }
 }

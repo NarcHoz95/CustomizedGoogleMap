@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">Training Final Project</string>
     <string name="title_activity_maps">Final Map</string>
+    <string name="setting_title">Settings</string>
+    <string name="mic_title">Touch &amp; Speak</string>
+    <string name="search_hint">Search something eg. Starbucks</string>
+    <string name="list_item_image_desc">Item Icon</string>
+    <string name="rating_text">Location Rating</string>
+    <string name="nav_text">Navigate To Maps</string>
 </resources>

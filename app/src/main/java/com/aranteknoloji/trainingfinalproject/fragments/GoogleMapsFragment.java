@@ -2,7 +2,7 @@ package com.aranteknoloji.trainingfinalproject.fragments;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -15,14 +15,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.aranteknoloji.trainingfinalproject.DetailsActivity;
 import com.aranteknoloji.trainingfinalproject.MyViewModel;
 import com.aranteknoloji.trainingfinalproject.R;
 import com.aranteknoloji.trainingfinalproject.adapters.PlacesCircleRecyclerViewAdapter;
-import com.aranteknoloji.trainingfinalproject.adapters.PlacesListRecyclerViewAdapter;
 import com.aranteknoloji.trainingfinalproject.adapters.RealmPlacesAdapter;
 import com.aranteknoloji.trainingfinalproject.models.MyClusteringItem;
 import com.aranteknoloji.trainingfinalproject.models.PlacesDataModel;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -31,6 +32,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
@@ -45,9 +47,8 @@ import java.util.Objects;
 import io.realm.RealmResults;
 
 public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
-        ClusterManager.OnClusterClickListener<MyClusteringItem> {
+        ClusterManager.OnClusterClickListener<MyClusteringItem>, GoogleMap.OnInfoWindowClickListener {
 
-    private RecyclerView recyclerView;
     private PlacesCircleRecyclerViewAdapter recyclerViewAdapter;
     private GoogleMap mMap;
     private MapView mapView;
@@ -88,7 +89,7 @@ public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
     }
 
     public void setupRecycler(View view) {
-        recyclerView = view.findViewById(R.id.circle_recycler);
+        RecyclerView recyclerView = view.findViewById(R.id.circle_recycler);
         recyclerView.setHasFixedSize(true);
         LinearLayoutManager lm = new LinearLayoutManager(getContext());
         lm.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -109,6 +110,10 @@ public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
 
         mMap.setOnCameraIdleListener(clusterManager);
         mMap.setOnMarkerClickListener(clusterManager);
+        mMap.setOnInfoWindowClickListener(this);
+        mMap.getUiSettings().setCompassEnabled(false);
+//        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
 
         viewModel.getData().observe(this, new MyObserverObject());
     }
@@ -148,6 +153,18 @@ public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
         return true;
     }
 
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        Intent intent = new Intent(getContext(), DetailsActivity.class);
+        intent.putExtra("icon", "https://maps.gstatic.com/mapfiles/place_api/icons/atm-71.png");
+        intent.putExtra("location", marker.getPosition().toString());
+        intent.putExtra("address", marker.getSnippet());
+        intent.putExtra("title", marker.getTitle());
+        intent.putExtra("rating", "0.0");
+        getContext().startActivity(intent);
+        getActivity().overridePendingTransition(R.anim.activity_slide_right_in, android.R.anim.fade_out);
+    }
+
     private class MyObserverObject implements Observer<RealmResults<PlacesDataModel>> {
         @Override
         public void onChanged(@Nullable RealmResults<PlacesDataModel> placesDataModels) {
@@ -162,7 +179,7 @@ public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
         private ImageView imageView;
         private final int dimens;
 
-        public MyIconRenderer() {
+        MyIconRenderer() {
             super(GoogleMapsFragment.this.getContext(), mMap, clusterManager);
 
             dimens = (int) getResources().getDimension(R.dimen.imageViewDimes);
@@ -177,7 +194,11 @@ public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
         @Override
         protected void onBeforeClusterItemRendered(MyClusteringItem item, MarkerOptions markerOptions) {
             //draw the pin
-            Glide.with(GoogleMapsFragment.this).load(item.getIconUrl()).thumbnail(0.1f).into(imageView);
+            Glide.with(GoogleMapsFragment.this)
+                    .load(item.getIconUrl())
+                    .thumbnail(0.1f)
+                    .apply(new RequestOptions().placeholder(R.drawable.ic_location_on_black_24dp))
+                    .into(imageView);
             Bitmap icon = iconGenerator.makeIcon();
             markerOptions.icon(BitmapDescriptorFactory.fromBitmap(icon));
         }

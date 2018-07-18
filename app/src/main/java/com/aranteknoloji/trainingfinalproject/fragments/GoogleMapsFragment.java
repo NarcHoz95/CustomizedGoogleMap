@@ -5,15 +5,27 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.aranteknoloji.trainingfinalproject.DetailsActivity;
 import com.aranteknoloji.trainingfinalproject.MyViewModel;
@@ -22,6 +34,7 @@ import com.aranteknoloji.trainingfinalproject.adapters.PlacesCircleRecyclerViewA
 import com.aranteknoloji.trainingfinalproject.adapters.RealmPlacesAdapter;
 import com.aranteknoloji.trainingfinalproject.models.MyClusteringItem;
 import com.aranteknoloji.trainingfinalproject.models.PlacesDataModel;
+import com.aranteknoloji.trainingfinalproject.models.QueryHelper;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -46,24 +59,32 @@ import java.util.Objects;
 
 import io.realm.RealmResults;
 
-public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
-        ClusterManager.OnClusterClickListener<MyClusteringItem>, GoogleMap.OnInfoWindowClickListener {
+import static android.content.Context.INPUT_METHOD_SERVICE;
 
+public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
+        ClusterManager.OnClusterClickListener<MyClusteringItem>, GoogleMap.OnInfoWindowClickListener,
+        TextView.OnEditorActionListener, View.OnClickListener {
+
+    private EditText search;
     private PlacesCircleRecyclerViewAdapter recyclerViewAdapter;
     private GoogleMap mMap;
     private MapView mapView;
     private ClusterManager<MyClusteringItem> clusterManager;
     private MyViewModel viewModel;
 
+    private AppCompatActivity activity;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         viewModel = ViewModelProviders.of(this).get(MyViewModel.class);
+        activity = (AppCompatActivity) getActivity();
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        if (!TextUtils.isEmpty(QueryHelper.getQuery())) viewModel.setData(QueryHelper.getQuery());
         View view = inflater.inflate(R.layout.fragment_googlemaps, container, false);
         mapView = view.findViewById(R.id.fragmentMap);
         mapView.onCreate(savedInstanceState);
@@ -76,10 +97,17 @@ public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
         mapView.getMapAsync(this);
 
         setupRecycler(view);
-
-//        viewModel = ViewModelProviders.of(this).get(MyViewModel.class);
-//        viewModel.getData().observe(this, new MyObserverObject());
+        setToolbar(view);
+        setHasOptionsMenu(true);
         return view;
+    }
+
+    private void setToolbar(View view) {
+        Toolbar toolbar = view.findViewById(R.id.mainToolbar);
+        activity.setSupportActionBar(toolbar);
+        search = view.findViewById(R.id.searchEditText);
+        search.setOnEditorActionListener(this);
+        toolbar.setOnClickListener(this);
     }
 
     private void setRealmAdapter(RealmResults<PlacesDataModel> data) {
@@ -165,6 +193,49 @@ public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
         getActivity().overridePendingTransition(R.anim.activity_slide_right_in, android.R.anim.fade_out);
     }
 
+    @Override
+    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+            QueryHelper.setQuery(search.getText().toString());
+            viewModel.setData(QueryHelper.getQuery());
+            search.setVisibility(View.INVISIBLE);
+            hideSoftKeyboard();
+            activity.getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        }
+        return true;
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.mainToolbar:
+                search.setVisibility(View.VISIBLE);
+                activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                break;
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.clear();
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.main, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                break;
+            case android.R.id.home:
+                activity.getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+                hideSoftKeyboard();
+                search.setVisibility(View.INVISIBLE);
+                break;
+        }
+        return true;
+    }
+
     private class MyObserverObject implements Observer<RealmResults<PlacesDataModel>> {
         @Override
         public void onChanged(@Nullable RealmResults<PlacesDataModel> placesDataModels) {
@@ -213,10 +284,19 @@ public class GoogleMapsFragment extends Fragment implements OnMapReadyCallback,
                     adapter.getItem(i).getTitle(), adapter.getItem(i).getAddress(), adapter.getItem(i).getIconUrl()));
         }
         clusterManager.addItems(items);
+        clusterManager.cluster();
     }
 
     private LatLng convertStringToLatLng(String s) {
         String[] part = s.substring(10, s.length()-1).split(",");
         return new LatLng(Double.parseDouble(part[0]), Double.parseDouble(part[1]));
+    }
+
+    private void hideSoftKeyboard() {
+        View view = activity.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) activity.getSystemService(INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 }

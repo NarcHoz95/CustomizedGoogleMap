@@ -2,6 +2,7 @@ package com.aranteknoloji.trainingfinalproject.realm;
 
 import com.aranteknoloji.trainingfinalproject.models.PlacesDataModel;
 
+import io.realm.Case;
 import io.realm.Realm;
 import io.realm.RealmResults;
 
@@ -59,10 +60,13 @@ public class RealmController {
     //query example
     public RealmResults<PlacesDataModel> queryedBooks(String keyword) {
         return realm.where(PlacesDataModel.class)
-                .contains("address", keyword)
+                .contains("address", keyword, Case.INSENSITIVE)
                 .or()
-                .contains("title", keyword)
+                .like("title", keyword, Case.INSENSITIVE)
+                .or()
+                .contains("title", keyword, Case.INSENSITIVE)
+                .or()
+                .like("iconUrl", keyword, Case.INSENSITIVE)
                 .findAll();
-
     }
 }
